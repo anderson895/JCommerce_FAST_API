@@ -167,7 +167,7 @@ async def login(user: UserLogin):
     try:
         # Query to fetch user data with additional conditions for account type and status
         cursor.execute("""
-            SELECT * FROM users 
+            SELECT * FROM user
             WHERE email = %s AND account_type = 'admin' AND status = 'active';
         """, (user.email,))
         user_record = cursor.fetchone()
