@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import bcrypt
 import os
 
 app = FastAPI()
@@ -120,6 +121,48 @@ def delete_product(product_id: int):
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting product: {e}")
+
+
+
+
+
+
+# User model for login request
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+# Login API
+@app.post("/login/")
+async def login(user: UserLogin):
+    try:
+        # Query to fetch user data
+        cursor.execute("SELECT * FROM users WHERE email = %s;", (user.email,))
+        user_record = cursor.fetchone()
+
+        if not user_record:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Verify the password using bcrypt
+        if not bcrypt.checkpw(user.password.encode('utf-8'), user_record['password'].encode('utf-8')):
+            raise HTTPException(status_code=401, detail="Invalid password")
+
+        # Check account status and type
+        if user_record['account_type'] != 'admin':
+            raise HTTPException(status_code=403, detail="Access restricted to admins")
+        
+        if user_record['status'] != 'active':
+            raise HTTPException(status_code=403, detail="Account is not active")
+
+        return {"message": "Login successful", "user": user_record['email']}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error during login: {e}")
+
+
+
+
+
 
 # Close database connection on shutdown
 @app.on_event("shutdown")
