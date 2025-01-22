@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
@@ -6,7 +7,20 @@ from psycopg2.extras import RealDictCursor
 import bcrypt
 import os
 
+
+
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://jcommerce-web-application.vercel.app"],  # Your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 
 # Database connection details (use environment variables for security)
 DB_URL = os.getenv("DB_URL", "postgresql://postgres.dajcekyqugcgteookxfb:DNWhZ7UsPWnMxbN0@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres")
