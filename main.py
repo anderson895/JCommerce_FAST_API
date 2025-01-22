@@ -40,6 +40,9 @@ class Product(BaseModel):
 # Login API
 @app.post("/login")
 def login(user: User):
+    conn = get_db_connection()  # Make sure a new connection is used for each request
+    cursor = conn.cursor()
+
     try:
         # Check if the user exists
         cursor.execute("SELECT * FROM users WHERE email = %s;", (user.email,))
@@ -59,7 +62,12 @@ def login(user: User):
         return {"message": "Login successful"}
 
     except Exception as e:
+        conn.rollback()  # Ensure the transaction is rolled back in case of error
         raise HTTPException(status_code=500, detail=f"Login error: {e}")
+
+    finally:
+        cursor.close()  # Ensure cursor is closed after the operation
+        conn.close()    # Ensure the connection is closed after the operation
 
 # Create a Product
 @app.post("/products/", response_model=Product)
