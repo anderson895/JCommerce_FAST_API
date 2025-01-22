@@ -173,13 +173,11 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
-# Login API
 @app.post("/logins/")
 async def login(user: UserLogin):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Query to fetch user data with additional conditions for account type and status
         cursor.execute("""
             SELECT * FROM "public"."user"
             WHERE "email" = %s AND "account_type" = 'admin' AND "status" = 'active';
@@ -189,13 +187,14 @@ async def login(user: UserLogin):
         if not user_record:
             raise HTTPException(status_code=404, detail="User not found or inactive admin account")
 
-        # Assuming the password is stored as a hashed value
-        if not bcrypt.checkpw(user.password.encode('utf-8'), user_record[2].encode('utf-8')):  # Adjust the index based on your table structure
+        # Use column names instead of indexes to avoid errors
+        if not bcrypt.checkpw(user.password.encode('utf-8'), user_record["password"].encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        return {"message": "Login successful", "user": user_record[1]}  # Adjust the index to return the user's email or identifier
-    
+        return {"message": "Login successful", "user": user_record["email"]}
+
     except Exception as e:
+        print(f"Error during login: {e}")  # Log the exception
         raise HTTPException(status_code=500, detail=f"Error during login: {e}")
     
     finally:
