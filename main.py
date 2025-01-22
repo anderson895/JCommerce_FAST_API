@@ -189,11 +189,11 @@ async def login(user: UserLogin):
         if not user_record:
             raise HTTPException(status_code=404, detail="User not found or inactive admin account")
 
-        # Verify the password using bcrypt
-        if not bcrypt.checkpw(user.password.encode('utf-8'), user_record['password'].encode('utf-8')):
+        # Assuming the password is stored as a hashed value
+        if not bcrypt.checkpw(user.password.encode('utf-8'), user_record[2].encode('utf-8')):  # Adjust the index based on your table structure
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        return {"message": "Login successful", "user": user_record['email']}
+        return {"message": "Login successful", "user": user_record[1]}  # Adjust the index to return the user's email or identifier
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during login: {e}")
