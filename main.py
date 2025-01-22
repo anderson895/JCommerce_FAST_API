@@ -137,7 +137,7 @@ class UserLogin(BaseModel):
 async def login(user: UserLogin):
     try:
         # Query to fetch user data
-        cursor.execute("SELECT * FROM users WHERE email = %s;", (user.email,))
+        cursor.execute("SELECT * FROM users WHERE email = %s and account_type='admin' AND status='active';", (user.email,))
         user_record = cursor.fetchone()
 
         if not user_record:
@@ -147,12 +147,7 @@ async def login(user: UserLogin):
         if not bcrypt.checkpw(user.password.encode('utf-8'), user_record['password'].encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid password")
 
-        # Check account status and type
-        if user_record['account_type'] != 'admin':
-            raise HTTPException(status_code=403, detail="Access restricted to admins")
-        
-        if user_record['status'] != 'active':
-            raise HTTPException(status_code=403, detail="Account is not active")
+      
 
         return {"message": "Login successful", "user": user_record['email']}
 
