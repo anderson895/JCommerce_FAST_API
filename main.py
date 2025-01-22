@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import List, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import bcrypt
-from typing import List, Optional
 import os
 
 app = FastAPI()
@@ -23,12 +22,7 @@ def get_db_connection():
 conn = get_db_connection()
 cursor = conn.cursor()
 
-# User model
-class User(BaseModel):
-    email: str
-    password: str
-
-# Product model (for the existing functionality)
+# Product model
 class Product(BaseModel):
     product_id: Optional[int] = None  # Auto-incremented by the database
     product_picture: Optional[str] = None
@@ -36,38 +30,6 @@ class Product(BaseModel):
     product_price: float
     product_description: Optional[str] = None
     product_stocks: int
-
-# Login API
-@app.post("/login")
-def login(user: User):
-    conn = get_db_connection()  # Make sure a new connection is used for each request
-    cursor = conn.cursor()
-
-    try:
-        # Check if the user exists
-        cursor.execute("SELECT * FROM users WHERE email = %s;", (user.email,))
-        db_user = cursor.fetchone()
-
-        if not db_user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        # Check if the user is active and is an admin
-        if db_user['account_type'] != 'admin' or db_user['status'] != 'active':
-            raise HTTPException(status_code=403, detail="User is not an admin or is not active")
-
-        # Compare hashed passwords using bcrypt
-        if not bcrypt.checkpw(user.password.encode('utf-8'), db_user['password'].encode('utf-8')):
-            raise HTTPException(status_code=401, detail="Incorrect password")
-
-        return {"message": "Login successful"}
-
-    except Exception as e:
-        conn.rollback()  # Ensure the transaction is rolled back in case of error
-        raise HTTPException(status_code=500, detail=f"Login error: {e}")
-
-    finally:
-        cursor.close()  # Ensure cursor is closed after the operation
-        conn.close()    # Ensure the connection is closed after the operation
 
 # Create a Product
 @app.post("/products/", response_model=Product)
