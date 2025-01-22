@@ -167,8 +167,8 @@ async def login(user: UserLogin):
     try:
         # Query to fetch user data with additional conditions for account type and status
         cursor.execute("""
-            SELECT * FROM user
-            WHERE email = %s AND account_type = 'admin' AND status = 'active';
+            SELECT * FROM "public"."user"
+            WHERE "email" = %s AND "account_type" = 'admin' AND "status" = 'active';
         """, (user.email,))
         user_record = cursor.fetchone()
 
@@ -180,8 +180,10 @@ async def login(user: UserLogin):
             raise HTTPException(status_code=401, detail="Invalid password")
 
         return {"message": "Login successful", "user": user_record['email']}
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during login: {e}")
+    
     finally:
         cursor.close()
         conn.close()
