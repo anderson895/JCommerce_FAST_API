@@ -133,27 +133,27 @@ class UserLogin(BaseModel):
     password: str
 
 # Login API
-@app.post("/login/")
+@app.post("/logins/")
 async def login(user: UserLogin):
     try:
-        # Query to fetch user data
-        cursor.execute("SELECT * FROM users WHERE email = %s and account_type='admin' AND status='active';", (user.email,))
+        # Query to fetch user data with additional conditions for account type and status
+        cursor.execute("""
+            SELECT * FROM users 
+            WHERE email = %s AND account_type = 'admin' AND status = 'active';
+        """, (user.email,))
         user_record = cursor.fetchone()
 
         if not user_record:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="User not found or inactive admin account")
 
         # Verify the password using bcrypt
         if not bcrypt.checkpw(user.password.encode('utf-8'), user_record['password'].encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid password")
 
-      
-
         return {"message": "Login successful", "user": user_record['email']}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during login: {e}")
-
 
 
 
